@@ -41,7 +41,7 @@ public final class Payment extends javax.swing.JPanel {
 
     protected static final String HSBC = "HSBC";
     protected static final String SCB = "SCB";
-    private static final String SCB_SWIFT_CODE = "SCBLBDD";
+    private static final String SCB_SWIFT_CODE = "SCBLBDDX";
     private static final String HSBC_SWIFT_CODE = "HSBCBDDH";
     private static final String SCB_NUMERIC_PREFIX = "X";
     private static final String HSBC_NUMERIC_PREFIX = "'";
@@ -436,6 +436,7 @@ public final class Payment extends javax.swing.JPanel {
         setAutoscrolls(true);
         setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
 
+        jButton1.setIcon(new javax.swing.ImageIcon("C:\\Users\\ShaerulH\\Documents\\NetBeansProjects\\ClientEditorCopy\\src\\paymenteditor\\image\\Logo.PNG")); // NOI18N
         jButton1.setText("Add Row");
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
