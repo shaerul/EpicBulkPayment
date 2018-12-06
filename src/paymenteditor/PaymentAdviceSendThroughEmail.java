@@ -26,13 +26,13 @@ import javax.mail.internet.MimeMultipart;
  *
  * @author ShaerulH
  */
-public class SendAdviceThroughEmail {
+public class PaymentAdviceSendThroughEmail {
 
     public static void sendEmailWithAttachments(String host, String port,
             final String userName, final String password, String toAddress, String ccAddress,
             String subject, String message, String[] attachFiles)
             throws AddressException, MessagingException {
-        
+
         // sets SMTP server properties
         Properties properties = new Properties();
         properties.put("mail.smtp.host", host);
@@ -49,7 +49,7 @@ public class SendAdviceThroughEmail {
                 return new PasswordAuthentication(userName, password);
             }
         };
-        
+
         Session session = Session.getInstance(properties, auth);
 
         // creates a new e-mail message
@@ -58,7 +58,7 @@ public class SendAdviceThroughEmail {
         msg.setFrom(new InternetAddress(userName));
         InternetAddress[] toAddresses = {new InternetAddress(toAddress)};
         msg.setRecipients(Message.RecipientType.TO, toAddresses);
-        
+
         InternetAddress[] ccAddresses = {new InternetAddress(ccAddress)};
         msg.setRecipients(Message.RecipientType.CC, ccAddresses);
         msg.setSubject(subject);
@@ -98,8 +98,8 @@ public class SendAdviceThroughEmail {
     /**
      * Test sending e-mail with attachments
      */
-    
     public static void main(String[] args) {
+
         // SMTP info
         String host = "smtp.epicstudiouk.com";
         String port = "25";
@@ -113,18 +113,17 @@ public class SendAdviceThroughEmail {
         /*
         String message = "Dear Sir,\n\nYour Payment has been Made and Advice has been attached herewith this email.\n"
                 + "Thanks.\n\nBest Regards,\nEPIC Finance Team";
-        */
-        
-         // message contains HTML markups
+         */
+
+        // message contains HTML markups
         String message = "Dear Supplier,<br><br>";
         message += "Your payment has been transferred successfully to your nominated Bank Account.<br>"
                 + "Your <b>\"PAYMENT ADVICE\"</b> has been attached herewith this email.<br>";
         message += "Thanks for being with EPIC.<br><br>";
         message += "Best Regards,<br>";
         message += "EPIC Finance Team";
-        
-        //message += "<font color=red>Duke</font>";
 
+        //message += "<font color=red>Duke</font>";
         // attachments
         String[] attachFiles = new String[1];
         attachFiles[0] = "e:\\iTextImageExample.pdf";

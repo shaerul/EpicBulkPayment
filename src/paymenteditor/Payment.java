@@ -15,9 +15,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JMenuItem;
@@ -26,6 +30,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import static paymenteditor.PaymentAdviceGenerator.columnHeaders;
 
 /**
  *
@@ -38,6 +43,11 @@ public final class Payment extends javax.swing.JPanel {
     private static final String BEFTN = "BEFTN";
     private static final String RTGS = "RTGS";
     private static final String BT = "BT";
+    private static final String YES = "YES";
+    private static final String NO = "NO";
+
+    private static final String OUTPUT_FILE_PATH = "e:\\PaymentOutbox\\";
+    private static final String EXT = ".csv";
 
     protected static final String HSBC = "HSBC";
     protected static final String SCB = "SCB";
@@ -45,7 +55,7 @@ public final class Payment extends javax.swing.JPanel {
     private static final String HSBC_SWIFT_CODE = "HSBCBDDH";
     private static final String SCB_NUMERIC_PREFIX = "X";
     private static final String HSBC_NUMERIC_PREFIX = "'";
-    private static final BigDecimal RTGS_MIN_AMOUNT = new BigDecimal(100000); // In BDT
+    private static final BigDecimal RTGS_MIN_AMOUNT = new BigDecimal("100000"); // In BDT
 
     // All column indexex and relative to left pane payment table columns
     // 0 means the very first left column and it will increment along left to right order
@@ -88,7 +98,7 @@ public final class Payment extends javax.swing.JPanel {
         "Payee Name",
         "PayeeBankAccNo",
         "PayeeAccType (Add1)",
-        "PayeeBankRouting (Add2)",
+        "PayeeBankRouting (Add2)", // Index
         "Amount",
         "Reason",
         "Payment Date (DD/MM/YYYY)",
@@ -96,6 +106,14 @@ public final class Payment extends javax.swing.JPanel {
         "Payee Email Address",
         "RTGS"
     };
+
+    // to determine the field index of routng number and rtgs
+    protected static final int CSV_SCB_PAYEE_ACCOUNT_NO_INDEX = 2;
+    protected static final int CSV_SCB_COMPANY_ACCOUNT_NO_INDEX = 8;
+    protected static final int CSV_SCB_ROUTING_NUMBER_INDEX = 4;
+    protected static final int CSV_SCB_RTGS_FLAG_INDEX = 10;
+    protected static final int CSV_SCB_AMOUNT_INDEX = 5;
+    protected static final int CSV_SCB_VALUE_DATE_INDEX = 7;
 
     /* 
     Sequnece number for generating SCB CSV file from table columns
@@ -162,58 +180,6 @@ public final class Payment extends javax.swing.JPanel {
         "Epic Routing No" // 22nd Field
     };
 
-    /*
-    Object[] rowData = {
-        "HSBC",
-        false,
-        "18130000437", // Max 15 Charascter
-        "26/11/2018", // Value Date
-        "G.S Chemical Suppliers", // Beneficiary Name
-        "",// Beneficiary Bank"
-        "0001554925602", //Benficiary Account No
-        "Current", // Beneficiary Account Type
-        "205260229", // Beneficiary Routing No
-        "400000", // Amount
-        "001174770015", // EPIC Debit Account
-        "HSBC", // EPIC Bank Name
-        "010234567", // EPIC Bank Routing No
-        "CCD", // Trans Type
-        "Cosmopolitan Industries pvt ltd", // First Party Name
-        "H-17 R-15 SEC-03", // First Party Address 1
-        "UTTARA DHAKA", // Frist Party Address 2
-        "", // Frist Party Address 3
-        "gschemicalsuppliers@gmail.com", // Email 1
-        "mamuna@epicbd.com", // Email 2
-        "" // Email 3
-    };
-
-    Object[] rowData1 = {
-        "SCB",
-        false,
-        "18130000438", // Max 15 Charascter
-        "26/11/2018", // Value Date
-        "G.S Chemical Suppliers", // Beneficiary Name
-        "",// Beneficiary Bank"
-        "0001554925602", //Benficiary Account No
-        "Current", // Beneficiary Account Type
-        "205260229", // Beneficiary Routing No
-        "400000", // Amount
-        "001174770015", // EPIC Debit Account
-        "HSBC", // EPIC Bank Name
-        "010234567", // EPIC Bank Routing No
-        "CCD", // Trans Type
-        "Cosmopolitan Industries pvt ltd", // First Party Name
-        "H-17 R-15 SEC-03", // First Party Address 1
-        "UTTARA DHAKA", // Frist Party Address 2
-        "", // Frist Party Address 3
-        "gschemicalsuppliers@gmail.com", // Email 1
-        "mamuna@epicbd.com", // Email 2
-        "" // Email 3
-    };
-     */
-    /**
-     * Creates new form Payment
-     */
     public Payment() {
         initComponents();
 
@@ -320,7 +286,7 @@ public final class Payment extends javax.swing.JPanel {
                         frame.getContentPane().add(new PaymentDetailsWindow());
                         frame.pack();
                         frame.setVisible(true);
-                        */
+                         */
                     }
 
                 });
@@ -436,8 +402,7 @@ public final class Payment extends javax.swing.JPanel {
         setAutoscrolls(true);
         setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
 
-        jButton1.setIcon(new javax.swing.ImageIcon("C:\\Users\\ShaerulH\\Documents\\NetBeansProjects\\ClientEditorCopy\\src\\paymenteditor\\image\\Logo.PNG")); // NOI18N
-        jButton1.setText("Add Row");
+        jButton1.setText("New +");
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -469,8 +434,11 @@ public final class Payment extends javax.swing.JPanel {
             }
         });
 
+        jSplitPane1.setDividerLocation(600);
         jSplitPane1.setDividerSize(2);
+        jSplitPane1.setResizeWeight(0.95);
 
+        paymentTable.setAutoCreateRowSorter(true);
         paymentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -488,6 +456,7 @@ public final class Payment extends javax.swing.JPanel {
 
         jSplitPane1.setLeftComponent(jScrollPane2);
 
+        detailsTable.setAutoCreateRowSorter(true);
         detailsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {},
@@ -499,9 +468,10 @@ public final class Payment extends javax.swing.JPanel {
 
             }
         ));
-        detailsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
+        detailsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        detailsTable.setAutoscrolls(false);
+        detailsTable.setNextFocusableComponent(paymentTable);
         detailsTable.setRowSelectionAllowed(false);
-        detailsTable.setShowHorizontalLines(false);
         detailsTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(detailsTable);
 
@@ -539,9 +509,9 @@ public final class Payment extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -554,19 +524,20 @@ public final class Payment extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton1)
-                            .addComponent(jButton2)
-                            .addComponent(jButton3)
-                            .addComponent(jButton4)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton5)
                             .addComponent(jButton6)
-                            .addComponent(jButton7))))
+                            .addComponent(jButton7)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton1)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jButton2)
+                                .addComponent(jButton3)
+                                .addComponent(jButton4)
+                                .addComponent(jButton5)))))
                 .addGap(18, 18, 18)
                 .addComponent(jSplitPane1)
                 .addGap(23, 23, 23))
@@ -576,7 +547,8 @@ public final class Payment extends javax.swing.JPanel {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         //populatePaymentTable(paymentTable);
-        newRow();
+        //newRow();
+        CSVProcessingSCBStepOne();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -635,19 +607,190 @@ public final class Payment extends javax.swing.JPanel {
         CSVprocessingForHSBC();
     }//GEN-LAST:event_jButton7ActionPerformed
 
+    private Vector<String> CSVSCBFieldPrcessing(Vector<String> row, String payerBankRouting) {
+
+        Vector<String> newRow = row;
+
+        // FIXING NUMBERS BY PREFIXING CAPITAL LETTER X
+        /*
+        newRow.set(CSV_SCB_ROUTING_NUMBER_INDEX, SCB_NUMERIC_PREFIX
+                + newRow.get(CSV_SCB_ROUTING_NUMBER_INDEX));
+         */
+        // FIXING DATE FORMAT
+        newRow.set(CSV_SCB_VALUE_DATE_INDEX,
+                MyUtility.SCBDateFormat(newRow.get(CSV_SCB_VALUE_DATE_INDEX)));
+
+        // ADDING CAPITAL LETTER X PREFIX
+        newRow.set(CSV_SCB_PAYEE_ACCOUNT_NO_INDEX, SCB_NUMERIC_PREFIX
+                + newRow.get(CSV_SCB_PAYEE_ACCOUNT_NO_INDEX));
+
+        // ADDING CAPITAL LETTER X PREFIX
+        newRow.set(CSV_SCB_COMPANY_ACCOUNT_NO_INDEX, SCB_NUMERIC_PREFIX
+                + newRow.get(CSV_SCB_COMPANY_ACCOUNT_NO_INDEX));
+
+        // Checking for Bank Transfer First
+        String benRouting = newRow.get(CSV_SCB_ROUTING_NUMBER_INDEX).substring(0, 3);
+        String epicRouting = payerBankRouting.substring(0, 3);
+
+        // SETTING PROPER BEFTN, RTGS AND BT VALUES
+        if (benRouting.equalsIgnoreCase(epicRouting)) { // This is unconditionally BT
+
+            // setting the row with SWIFT CODE
+            newRow.set(CSV_SCB_ROUTING_NUMBER_INDEX, SCB_SWIFT_CODE);
+            // leaving the RTGS field blank
+            newRow.set(CSV_SCB_RTGS_FLAG_INDEX, "");
+
+        } else if (newRow.get(CSV_SCB_RTGS_FLAG_INDEX).toString().equalsIgnoreCase(RTGS)) { // This is for RTGS
+
+            BigDecimal amount = new BigDecimal(newRow.get(CSV_SCB_AMOUNT_INDEX));
+
+            // amount less than one lac so RTGS is not possible
+            if (amount.compareTo(RTGS_MIN_AMOUNT) < 0) { // amount less than one lac so RTGS is not possible 
+
+                newRow.set(CSV_SCB_RTGS_FLAG_INDEX, NO);
+
+            } else {
+
+                newRow.set(CSV_SCB_RTGS_FLAG_INDEX, YES);
+            }
+
+            // Prefixing Routing Number with Capital X
+            newRow.set(CSV_SCB_ROUTING_NUMBER_INDEX, SCB_NUMERIC_PREFIX
+                    + newRow.get(CSV_SCB_ROUTING_NUMBER_INDEX));
+
+        } else {
+
+            newRow.set(CSV_SCB_RTGS_FLAG_INDEX, NO);
+
+            // Prefixing Routing Number with Capital X
+            newRow.set(CSV_SCB_ROUTING_NUMBER_INDEX, SCB_NUMERIC_PREFIX
+                    + newRow.get(CSV_SCB_ROUTING_NUMBER_INDEX));
+        }
+
+        return newRow;
+    }
+
+    private void CSVProcessingSCBStepOne() {
+
+        // This is temporary vector for retaining SCB rows only
+        Vector<Vector> rowTable = new Vector<Vector>();
+
+        // Operate on All rows one after another
+        // Then pick up all required fields from column position
+        // Apply buisiness logic and meidate to final values
+        // Write into three files for BEFTN RTGS and BT
+        for (int i = 0; i < paymentTable.getRowCount(); i++) {
+
+            // checking if its for SCB
+            if (paymentTable.getValueAt(i, BANK_COLUMN_INDEX).toString().equalsIgnoreCase(SCB)) {
+
+                // This is temporary container for the current row only
+                Vector<String> row = new Vector<String>();
+
+                // Column wise data collection by matching with SEQ_SCB[index]
+                for (int j = 0; j < SEQ_SCB.length; j++) {
+
+                    row.add(paymentTable.getValueAt(i, SEQ_SCB[j]).toString());
+                }
+
+                // Do the processing stage two
+                row = CSVSCBFieldPrcessing(row, paymentTable.getValueAt(i, EPIC_ROUTING_INDEX).toString());
+                rowTable.add(row);
+            }
+
+        }
+
+        if (rowTable.size() > 0) {
+
+            SCBCSVWriteToFile(rowTable);
+        }
+    }
+
+    private void SCBCSVWriteToFile(Vector<Vector> rowTable) {
+
+        // These are the final vectors to be sent for writing as a CSV file
+        Vector<Vector> rowTableBEFTN = new Vector<Vector>();
+        Vector<Vector> rowTableRTGS = new Vector<Vector>();
+        Vector<Vector> rowTableBT = new Vector<Vector>();
+
+        // Adding the Field Column headers to all three vectors
+        Vector<String> headerRow = new Vector<>();
+        Collections.addAll(headerRow, CSV_SCB);
+
+        rowTableBEFTN.add(headerRow);
+        rowTableRTGS.add(headerRow);
+        rowTableBT.add(headerRow);
+
+        for (Vector<String> row : rowTable) {
+
+            // Check out if its BT
+            if (row.get(CSV_SCB_ROUTING_NUMBER_INDEX).toString().equalsIgnoreCase(SCB_SWIFT_CODE)) {
+
+                rowTableBT.add(row);
+
+            } else if (row.get(CSV_SCB_RTGS_FLAG_INDEX).toString().equalsIgnoreCase(YES)) { // RTGS
+
+                rowTableRTGS.add(row);
+
+            } else { // BEFTN
+
+                rowTableBEFTN.add(row);
+
+            }
+        }
+
+        // FINAL WRITING TO A FILE
+        String dateNow = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+
+        try {
+            
+            // Write to BEFTN File if the size is greater than 1
+            // in 0 index the headers from the array string has all ready been inserted
+            // At the begining of for loop
+            if (rowTableBEFTN.size() > 1) {
+
+                CSVJobs.writeDataToCSV(rowTableBEFTN, OUTPUT_FILE_PATH + SCB + "-" + BEFTN + "-" + dateNow + EXT);
+
+            }
+            // Write to RTGS File if the size is not zero
+            if (rowTableRTGS.size() > 1) {
+                CSVJobs.writeDataToCSV(rowTableRTGS, OUTPUT_FILE_PATH + SCB + "-" + RTGS + "-" + dateNow + EXT);
+            }
+            // Write to BT File if the size is not zero
+            if (rowTableBT.size() > 1) {
+                CSVJobs.writeDataToCSV(rowTableBT, OUTPUT_FILE_PATH + SCB + "-" + BT + "-" + dateNow + EXT);
+            }
+
+        } catch (Exception ex) {
+            Logger.getLogger(Payment.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     private void CSVprocessingForSCB() {
+
         // This is CSV file generation process for SCB
         try {
 
-            // This is the final vector to be sent for writing as a file
-            Vector<Vector> rowTable = new Vector<Vector>();
+            // These are the final vectors to be sent for writing as a CSV file
+            Vector<Vector> rowTableBEFTN = new Vector<Vector>(CSV_SCB.length);
+            Vector<Vector> rowTableRTGS = new Vector<Vector>(CSV_SCB.length);
+            Vector<Vector> rowTableBT = new Vector<Vector>(CSV_SCB.length);
+
+            // Adding the Field Column headers to all three vectors
+            Vector<String> headerRow = new Vector<>();
+            Collections.addAll(headerRow, CSV_SCB);
+
+            rowTableBEFTN.add(headerRow);
+            rowTableRTGS.add(headerRow);
+            rowTableBT.add(headerRow);
 
             for (int i = 0; i < paymentTable.getRowCount(); i++) {
 
                 // add row if the row is for SCB or ignore
+                // TODO: put else if for HSBC and so on
                 if (paymentTable.getValueAt(i, BANK_COLUMN_INDEX).toString().equalsIgnoreCase(SCB)) {
 
-                    // This is container for the current row only
+                    // This is temporary container for the current row only
                     Vector<String> row = new Vector<>();
 
                     // Column wise data collection by matching with SEQ_SCB[index]
@@ -659,11 +802,11 @@ public final class Payment extends javax.swing.JPanel {
 
                                 if (paymentTable.getValueAt(i, SEQ_SCB[j]).toString().equalsIgnoreCase(RTGS)) {
                                     // payment will be through RTGS
-                                    row.addElement("YES");
+                                    row.addElement(YES);
 
                                 } else {
                                     // else through BEFTN
-                                    row.addElement("NO"); // Leaving blank if BEFTN;
+                                    row.addElement(NO);
 
                                 }
 
@@ -671,14 +814,17 @@ public final class Payment extends javax.swing.JPanel {
 
                             case BENEFICIARY_ROUTING_INDEX:
 
-                                String benRouting = paymentTable.getValueAt(i, SEQ_SCB[j]).toString().substring(0, 2);
-                                String epicRouting = paymentTable.getValueAt(i, EPIC_ROUTING_INDEX).toString().substring(0, 2);
+                                String benRouting = paymentTable.getValueAt(i, SEQ_SCB[j]).toString().substring(0, 3);
+                                String epicRouting = paymentTable.getValueAt(i, EPIC_ROUTING_INDEX).toString().substring(0, 3);
 
                                 if (benRouting.equalsIgnoreCase(epicRouting)) {
-                                    // if first three digits matches 
-                                    // this means beneficiary and epic both has got bank in common
+
+                                    /* if first three digits matches 
+                                       this means beneficiary and epic both has got Bank in common
+                                       So put the Swift code and leave the RTGS field Blank
+                                     */
                                     row.addElement(SCB_SWIFT_CODE); // putting swift code
-                                    //row.setElementAt("", 4); // set the RTGS value to blank
+                                    //row.set(CSV_SCB_RTGS_FLAG_INDEX, ""); // set the RTGS value to blank
 
                                 } else {
 
@@ -709,14 +855,40 @@ public final class Payment extends javax.swing.JPanel {
                         }
                     }
 
-                    rowTable.addElement(row);
+                    // Select the right vector either BEFTN or RTGS or BT
+                    if (row.get(CSV_SCB_ROUTING_NUMBER_INDEX).equalsIgnoreCase(SCB_SWIFT_CODE)) { // BT
+
+                        rowTableBT.addElement(row);
+
+                    } else if (row.get(CSV_SCB_RTGS_FLAG_INDEX).equalsIgnoreCase(YES)) { // RTGS
+
+                        rowTableRTGS.addElement(row);
+
+                    } else { // BEFTN
+
+                        rowTableBEFTN.addElement(row);
+                    }
 
                 }
 
             }
 
-            //yourModel.getValueAt(ERROR, WIDTH)
-            CSVJobs.writeDataToCSV(rowTable, SCB);
+            String dateNow = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+
+            // Write to BEFTN File if the size is greater than 1
+            // in 0 index the headers from the array string has all ready been inserted
+            // At the begining of for loop
+            if (rowTableBEFTN.size() > 1) {
+                CSVJobs.writeDataToCSV(rowTableBEFTN, OUTPUT_FILE_PATH + SCB + "-" + BEFTN + "-" + dateNow + EXT);
+            }
+            // Write to RTGS File if the size is not zero
+            if (rowTableRTGS.size() > 1) {
+                CSVJobs.writeDataToCSV(rowTableRTGS, OUTPUT_FILE_PATH + SCB + "-" + RTGS + "-" + dateNow + EXT);
+            }
+            // Write to BT File if the size is not zero
+            if (rowTableBT.size() > 1) {
+                CSVJobs.writeDataToCSV(rowTableBT, OUTPUT_FILE_PATH + SCB + "-" + BT + "-" + dateNow + EXT);
+            }
 
         } catch (Exception ex) {
             Logger.getLogger(Payment.class.getName()).log(Level.SEVERE, null, ex);
@@ -759,13 +931,12 @@ public final class Payment extends javax.swing.JPanel {
                                 break;
 
                             case BENEFICIARY_ROUTING_INDEX:
-                                
+
                                 /* if first three digits of Benficiary Bank Routing 
                                    and EPIC Bank Routing are same then it would be BANK TRANSFER
                                    In case of Bank Transfer we have replace Beneficiary routing
                                    number with the Bank's SWIFT CODE. 
-                                */    
-                                
+                                 */
                                 String beneficiaryRouting = paymentTable.getValueAt(i, SEQ_HSBC[j]).toString().substring(0, 2);
                                 String epicRouting = paymentTable.getValueAt(i, EPIC_ROUTING_INDEX).toString().substring(0, 2);
 
@@ -809,10 +980,10 @@ public final class Payment extends javax.swing.JPanel {
                 }
             }
 
-            //yourModel.getValueAt(ERROR, WIDTH)
-            CSVJobs.writeDataToCSV(rowTable,HSBC);
+            CSVJobs.writeDataToCSV(rowTable, HSBC);
 
         } catch (Exception ex) {
+
             Logger.getLogger(Payment.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

@@ -81,7 +81,7 @@ public class MainClass {
             public void run() {
                 
                 //Payment payment = new Payment();
-                javax.swing.JFrame frame = new javax.swing.JFrame("Bank Payement Editor");
+                javax.swing.JFrame frame = new javax.swing.JFrame("EPIC Look Up Bank Payment Application");
                 frame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
                 frame.getContentPane().add(new Payment());
                 frame.pack();

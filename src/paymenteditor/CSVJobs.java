@@ -89,25 +89,26 @@ public class CSVJobs {
         return rowTable;
     }
 
-    public static void writeDataToCSV(Vector<Vector> rowTable, String bank) throws Exception {
+    public static void writeDataToCSV(Vector<Vector> rowTable, String fileAbsolutePath) throws Exception {
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        Date date = new Date();
-        String filedate = dateFormat.format(date);
+        //DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        //String filedate = dateFormat.format(new Date());
+        //new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 
-        String csv = "e:\\PaymentOutbox\\" + bank + "-" + filedate + ".csv";
-        CSVWriter writer = new CSVWriter(new FileWriter(csv));
+        //String csv = "e:\\PaymentOutbox\\" + bank + "-" + transferType + "-" + filedate + ".csv";
+        CSVWriter writer = new CSVWriter(new FileWriter(fileAbsolutePath));
 
         //Create record
         //String[] record = "4,David,Miller,Australia,30".split(",");
         List<String[]> entries = new ArrayList<>();
 
         // Choosing Header format for nominated Bank
+        /*
         if (bank.equalsIgnoreCase(Payment.SCB)) {
             entries.add(Payment.CSV_SCB);
         } else {
             entries.add(Payment.CSV_HSBC);
-        }
+        }*/
 
         for (Iterator<Vector> it = rowTable.iterator(); it.hasNext();) {
 
